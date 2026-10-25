@@ -1,0 +1,21 @@
+# Real configuration and secrets — never commit
+config/config.json
+*.env
+.env*
+*.pfx
+*.key
+*.pem
+
+# Large / generated artifacts
+*.ffu
+*.wim
+*.iso
+*.vhdx
+Drivers/
+logs/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/

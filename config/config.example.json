@@ -1,0 +1,11 @@
+{
+  "FfuBuilderPath": "<FFU-BUILDER-PATH>",
+  "FfuBuilderConfigFile": "<FFU-BUILDER-PATH>\\config\\FFUConfig.json",
+  "StagingPath": "<STAGING-PATH>",
+  "StagingShareName": "<STAGING-SHARE-NAME>",
+  "WdsRemoteInstallPath": "<WDS-REMOTEINSTALL-PATH>",
+  "BootImageName": "<BOOT-IMAGE-NAME>",
+  "DriverMappingPath": "<STAGING-PATH>\\Drivers\\DriverMapping.json",
+  "KeepImages": 3,
+  "MinFreeSpaceGB": 50
+}

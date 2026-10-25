@@ -1,0 +1,93 @@
+BeforeAll {
+    $src = Join-Path $PSScriptRoot '..' 'src' 'FfuPxeKit'
+    Get-ChildItem (Join-Path $src 'Private'), (Join-Path $src 'Public') -Filter *.ps1 | ForEach-Object { . $_.FullName }
+
+    function New-ModelFolder([string]$Root, [string]$Rel, [switch]$Empty) {
+        $p = Join-Path $Root (ConvertTo-FfuFsPath $Rel)
+        New-Item -ItemType Directory -Path $p -Force | Out-Null
+        if (-not $Empty) { Set-Content (Join-Path $p 'driver.inf') 'x' }
+    }
+}
+
+Describe 'Add-FfuDriverModel' {
+    BeforeEach {
+        $root = Join-Path $TestDrive ([guid]::NewGuid())
+        New-Item -ItemType Directory $root | Out-Null
+        $map = Join-Path $root 'DriverMapping.json'
+        New-ModelFolder $root 'Contoso\Laptop 14 Gen 1 (MT01)'
+    }
+
+    It 'creates the mapping file with a JSON array for a single entry' {
+        Add-FfuDriverModel -MappingPath $map -DriversRoot $root -Manufacturer Contoso -Model 'Laptop 14 Gen 1 (MT01)' -MachineType MT01 | Out-Null
+        (Get-Content $map -Raw).TrimStart().StartsWith('[') | Should -BeTrue
+        $m = Read-FfuDriverMapping $map
+        $m.Count | Should -Be 1
+        $m[0].DriverPath | Should -Be 'Contoso\Laptop 14 Gen 1 (MT01)'
+    }
+
+    It 'appends a second model' {
+        New-ModelFolder $root 'Fabrikam\Notebook 15 G2'
+        Add-FfuDriverModel -MappingPath $map -DriversRoot $root -Manufacturer Contoso -Model 'Laptop 14 Gen 1 (MT01)' -MachineType MT01 | Out-Null
+        Add-FfuDriverModel -MappingPath $map -DriversRoot $root -Manufacturer Fabrikam -Model 'Notebook 15 G2' -MachineType MT02 | Out-Null
+        (Read-FfuDriverMapping $map).Count | Should -Be 2
+    }
+
+    It 'refuses a duplicate machine type without -Force' {
+        Add-FfuDriverModel -MappingPath $map -DriversRoot $root -Manufacturer Contoso -Model 'Laptop 14 Gen 1 (MT01)' -MachineType MT01 | Out-Null
+        { Add-FfuDriverModel -MappingPath $map -DriversRoot $root -Manufacturer Contoso -Model 'Laptop 14 Gen 1 (MT01)' -MachineType MT01 } | Should -Throw '*already mapped*'
+    }
+
+    It 'updates an existing entry with -Force' {
+        New-ModelFolder $root 'Contoso\Laptop 14 Gen 1 v2'
+        Add-FfuDriverModel -MappingPath $map -DriversRoot $root -Manufacturer Contoso -Model 'Laptop 14 Gen 1 (MT01)' -MachineType MT01 | Out-Null
+        Add-FfuDriverModel -MappingPath $map -DriversRoot $root -Manufacturer Contoso -Model 'Laptop 14 Gen 1 v2' -MachineType MT01 -Force | Out-Null
+        $m = Read-FfuDriverMapping $map
+        $m.Count | Should -Be 1
+        $m[0].Model | Should -Be 'Laptop 14 Gen 1 v2'
+    }
+
+    It 'throws when the driver folder does not exist' {
+        { Add-FfuDriverModel -MappingPath $map -DriversRoot $root -Manufacturer Northwind -Model 'Desktop 9' -MachineType MT09 } | Should -Throw '*not found*'
+    }
+
+    It 'changes nothing with -WhatIf' {
+        Add-FfuDriverModel -MappingPath $map -DriversRoot $root -Manufacturer Contoso -Model 'Laptop 14 Gen 1 (MT01)' -MachineType MT01 -WhatIf
+        Test-Path $map | Should -BeFalse
+    }
+}
+
+Describe 'Test-FfuDriverMapping' {
+    BeforeEach {
+        $root = Join-Path $TestDrive ([guid]::NewGuid())
+        New-Item -ItemType Directory $root | Out-Null
+        $map = Join-Path $root 'DriverMapping.json'
+    }
+
+    It 'returns nothing for a consistent setup' {
+        New-ModelFolder $root 'Contoso\Laptop 14 Gen 1 (MT01)'
+        Add-FfuDriverModel -MappingPath $map -DriversRoot $root -Manufacturer Contoso -Model 'Laptop 14 Gen 1 (MT01)' -MachineType MT01 | Out-Null
+        Test-FfuDriverMapping -MappingPath $map -DriversRoot $root | Should -BeNullOrEmpty
+    }
+
+    It 'finds a leftover duplicate model folder' {
+        New-ModelFolder $root 'Contoso\Laptop 14 Gen 1 (MT01)'
+        New-ModelFolder $root 'Contoso\Laptop 14 Gen 1 (Intel) (MT01)'
+        Add-FfuDriverModel -MappingPath $map -DriversRoot $root -Manufacturer Contoso -Model 'Laptop 14 Gen 1 (MT01)' -MachineType MT01 | Out-Null
+        $r = @(Test-FfuDriverMapping -MappingPath $map -DriversRoot $root)
+        $r.Count | Should -Be 1
+        $r[0].Check | Should -Be 'UnmappedFolder'
+        $r[0].Item  | Should -Be 'Contoso\Laptop 14 Gen 1 (Intel) (MT01)'
+    }
+
+    It 'finds missing and empty folders and duplicate machine types' {
+        New-ModelFolder $root 'Contoso\A' -Empty
+        Write-FfuDriverMapping -Path $map -Entries @(
+            [pscustomobject]@{ Manufacturer='Contoso'; Model='A'; DriverPath='Contoso\A'; MachineType='1111' },
+            [pscustomobject]@{ Manufacturer='Contoso'; Model='B'; DriverPath='Contoso\B'; MachineType='1111' }
+        )
+        $checks = (Test-FfuDriverMapping -MappingPath $map -DriversRoot $root).Check
+        $checks | Should -Contain 'EmptyFolder'
+        $checks | Should -Contain 'MissingFolder'
+        $checks | Should -Contain 'DuplicateType'
+    }
+}
