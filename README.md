@@ -15,7 +15,8 @@ Windows Deployment Services (WDS) — built around [FFU Builder](https://github.
 |---|---|---|
 | Config reader | ✅ | — |
 | Driver mapping (`Add-FfuDriverModel`, `Test-FfuDriverMapping`) | ✅ | ⏳ pending |
-| `Install-FfuPxeServer`, `Update-FfuBootImage`, `Invoke-FfuMonthlyBuild`, `Test-FfuEnvironment`, `Remove-FfuOldImages` | planned | planned |
+| Health check (`Test-FfuEnvironment`) | ✅ | ⏳ pending |
+| `Install-FfuPxeServer`, `Update-FfuBootImage`, `Invoke-FfuMonthlyBuild`, `Remove-FfuOldImages` | planned | planned |
 
 ## What it does
 
@@ -42,6 +43,19 @@ FFU Builder creates the image (FFU) and the WinPE deploy media.
 - Windows Server 2022/2025 (x64) with WDS
 - Hyper-V capable x64 host for FFU Builder
 - PowerShell 5.1 (Windows) — tests also run on PowerShell 7
+
+## Quick start: health check
+
+Read-only - changes nothing on the server.
+
+```powershell
+Copy-Item .\config\config.example.json .\config\config.json   # then fill in your values
+.\scripts\Test-FfuEnvironment.ps1 -ConfigPath .\config\config.json
+```
+
+Each check returns `Pass`, `Warn`, `Fail` or `Skip`. Exit code `1` if anything failed.
+Checks: config, folders, FFU Builder, WDS service, boot image, staging share,
+free disk space, age of the newest FFU image, driver mapping consistency.
 
 ## Configuration
 

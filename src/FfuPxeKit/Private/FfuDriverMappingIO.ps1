@@ -12,7 +12,9 @@ function Read-FfuDriverMapping {
     if (-not (Test-Path -LiteralPath $Path)) { return ,@() }
     $raw = Get-Content -LiteralPath $Path -Raw
     if ([string]::IsNullOrWhiteSpace($raw)) { return ,@() }
-    ,@($raw | ConvertFrom-Json)
+    try { $data = $raw | ConvertFrom-Json -ErrorAction Stop }
+    catch { throw "Invalid JSON in driver mapping '$Path': $($_.Exception.Message)" }
+    ,@($data)
 }
 
 function Write-FfuDriverMapping {
