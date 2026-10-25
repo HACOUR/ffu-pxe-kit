@@ -44,6 +44,10 @@ FFU Builder creates the image (FFU) and the WinPE deploy media.
 - Hyper-V capable x64 host for FFU Builder
 - PowerShell 5.1 (Windows) — tests also run on PowerShell 7
 
+## Setup guide
+
+👉 **[docs/setup-guide.md](docs/setup-guide.md)** - step by step, from FFU build to PXE deployment (draft).
+
 ## Quick start: health check
 
 Read-only - changes nothing on the server.
