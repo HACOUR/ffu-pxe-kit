@@ -33,7 +33,8 @@ function New-FfuNetworkBootImage {
     if (-not (Test-FfuIsWindows)) { throw 'New-FfuNetworkBootImage requires Windows (DISM/WDS).' }
     if (-not (Test-Path -LiteralPath $SourceWim)) { throw "Source wim not found: $SourceWim" }
 
-    $winpeDir = Join-Path $PSScriptRoot '..' '..' '..' 'winpe'
+    # Windows PowerShell 5.1: Join-Path accepts only one child path
+    $winpeDir = [IO.Path]::GetFullPath([IO.Path]::Combine($PSScriptRoot, '..', '..', '..', 'winpe'))
     $wrapper  = Join-Path $winpeDir 'Start-FfuNetworkDeploy.ps1'
     $startnet = Join-Path $winpeDir 'startnet.cmd'
     foreach ($f in $wrapper, $startnet) { if (-not (Test-Path $f)) { throw "Missing kit file: $f" } }

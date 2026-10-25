@@ -4,9 +4,9 @@ Runs the ffu-pxe-kit health check and prints a summary. Read-only.
 Exit code: 0 = no failures, 1 = at least one Fail.
 #>
 param(
-    [string]$ConfigPath = (Join-Path $PSScriptRoot '..' 'config' 'config.json')
+    [string]$ConfigPath = [IO.Path]::Combine($PSScriptRoot, '..', 'config', 'config.json')
 )
-Import-Module (Join-Path $PSScriptRoot '..' 'src' 'FfuPxeKit' 'FfuPxeKit.psm1') -Force
+Import-Module ([IO.Path]::Combine($PSScriptRoot, '..', 'src', 'FfuPxeKit', 'FfuPxeKit.psm1')) -Force
 $results = Test-FfuEnvironment -ConfigPath $ConfigPath
 $results | Format-Table -AutoSize
 $summary = $results | Group-Object Status | ForEach-Object { "$($_.Name): $($_.Count)" }
