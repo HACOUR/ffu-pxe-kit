@@ -5,18 +5,21 @@ Windows Deployment Services (WDS) — built around [FFU Builder](https://github.
 
 ![status: beta](https://img.shields.io/badge/status-beta-orange)
 
-> **⚠ Beta:** Functions are unit-tested (Pester, mocked), but **not yet tested
-> end-to-end** against a real WDS/PXE environment. Further testing is required
-> before production use. Use at your own risk and try it in a lab first.
+> **⚠ Beta:** All functions are unit-tested. On a real WDS server the health check
+> and building/importing the network boot image work. **The end-to-end deployment
+> on a device has not been tested yet.** Further testing is required before
+> production use. Use at your own risk and try it in a lab first.
 
 ## Test status
 
-| Area | Unit tests (mocked) | Tested on real WDS/PXE |
-|---|---|---|
-| Config reader | ✅ | — |
-| Driver mapping (`Add-FfuDriverModel`, `Test-FfuDriverMapping`) | ✅ | ⏳ pending |
-| Health check (`Test-FfuEnvironment`) | ✅ | ⏳ pending |
-| **Network deployment** (`ConvertTo-FfuNetworkApplyScript`, `New-FfuNetworkBootImage`, `winpe/`) | ✅ (patch verified against ApplyFFU.ps1 releases 2026-04 and current main) | ⏳ pending |
+| Area | Unit tests (mocked) | Tested on real WDS server | Tested on a device |
+|---|---|---|---|
+| Config reader | ✅ | ✅ | — |
+| Driver mapping (`Test-FfuDriverMapping`) | ✅ | ✅ (found an unmapped duplicate folder) | — |
+| Driver mapping (`Add-FfuDriverModel`) | ✅ | ⏳ | — |
+| Health check (`Test-FfuEnvironment`) | ✅ | ✅ Windows Server, WDS standalone | — |
+| Network boot image (`ConvertTo-FfuNetworkApplyScript`, `New-FfuNetworkBootImage`) | ✅ patch verified against ApplyFFU.ps1 2026-04 and current main | ✅ built, patched, imported into WDS as additional boot image | ⏳ pending |
+| Network deployment in WinPE (`winpe/Start-FfuNetworkDeploy.ps1`) | ✅ syntax/static checks | — | ⏳ pending |
 | `Install-FfuPxeServer`, `Update-FfuBootImage`, `Invoke-FfuMonthlyBuild`, `Remove-FfuOldImages` | planned | planned |
 
 ## What it does

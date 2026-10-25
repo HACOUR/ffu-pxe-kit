@@ -119,7 +119,7 @@ Dismount-DiskImage -ImagePath '<FFU-BUILDER-PATH>\WinPE_FFU_Deploy_x64.iso'
 
 Repeat after every new WinPE build (planned: `Update-FfuBootImage`).
 
-## 6. Network deployment - no USB stick ⚠ unit-tested, end-to-end test pending
+## 6. Network deployment - no USB stick ⚠ boot image build tested on WDS, device test pending
 
 **Why this is needed:** the stock `ApplyFFU.ps1` reads the FFU and the `Drivers` folder
 **from a local volume only** (removable NTFS drive, or fixed NTFS volume labelled `Deploy`).
