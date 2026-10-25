@@ -40,8 +40,10 @@ $x = 10
 foreach ($b in $buttons) {
     $btn = New-Object System.Windows.Forms.Button
     $btn.Text = $b.Text; $btn.Location = New-Object System.Drawing.Point($x, 15); $btn.Size = New-Object System.Drawing.Size(230, 32)
-    $act = $b.Action; $title = $b.Text
-    $btn.Add_Click({ Invoke-Action $title $act }.GetNewClosure())
+    # Keep title/action on the button itself. GetNewClosure() would move the handler into a
+    # separate module scope where the script's functions (Invoke-Action) are not visible.
+    $btn.Tag = $b
+    $btn.Add_Click({ Invoke-Action $this.Tag.Text $this.Tag.Action })   # $this = clicked button
     $form.Controls.Add($btn)
     $x += 240
 }

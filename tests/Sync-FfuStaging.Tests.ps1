@@ -91,6 +91,10 @@ Describe 'Sync-FfuStaging' {
 }
 
 Describe 'GUI script' {
+    It 'does not use GetNewClosure in click handlers (functions would be out of scope)' {
+        Get-Content (Join-Path $PSScriptRoot '..' 'gui' 'FfuPxeKit-Gui.ps1') -Raw | Should -Not -Match 'GetNewClosure\(\)\)'
+    }
+
     It 'parses without errors' {
         $errors = $null
         [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot '..' 'gui' 'FfuPxeKit-Gui.ps1'), [ref]$null, [ref]$errors) | Out-Null
