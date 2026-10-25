@@ -16,6 +16,7 @@ Windows Deployment Services (WDS) — built around [FFU Builder](https://github.
 | Config reader | ✅ | — |
 | Driver mapping (`Add-FfuDriverModel`, `Test-FfuDriverMapping`) | ✅ | ⏳ pending |
 | Health check (`Test-FfuEnvironment`) | ✅ | ⏳ pending |
+| **Network deployment** (`ConvertTo-FfuNetworkApplyScript`, `New-FfuNetworkBootImage`, `winpe/`) | ✅ (patch verified against ApplyFFU.ps1 releases 2026-04 and current main) | ⏳ pending |
 | `Install-FfuPxeServer`, `Update-FfuBootImage`, `Invoke-FfuMonthlyBuild`, `Remove-FfuOldImages` | planned | planned |
 
 ## What it does
@@ -25,6 +26,8 @@ FFU Builder creates the image (FFU) and the WinPE deploy media.
 
 | Function | Purpose |
 |---|---|
+| `New-FfuNetworkBootImage` | **Deploy over the network without USB:** builds a WinPE boot image that maps the staging share and runs a patched copy of FFU Builder's `ApplyFFU.ps1` |
+| `ConvertTo-FfuNetworkApplyScript` | Minimal, version-checked patch of `ApplyFFU.ps1` (deploy root + per-device log name) |
 | `Install-FfuPxeServer` | Set up a standalone WDS server, staging share and boot image |
 | `Update-FfuBootImage` | Replace the WDS boot image after a new WinPE build |
 | `Invoke-FfuMonthlyBuild` | Headless monthly FFU build via FFU Builder `-ConfigFile` |
@@ -37,6 +40,8 @@ FFU Builder creates the image (FFU) and the WinPE deploy media.
 - **One driverless FFU** for all devices
 - **Drivers per model** are injected at apply time, selected through a mapping file
 - **PXE boot** via standalone WDS (no Active Directory required)
+- **No USB stick:** stock FFU Builder deploys from USB only - ffu-pxe-kit adds network deployment
+- **No stored passwords:** the share password is asked at runtime in WinPE
 
 ## Requirements
 

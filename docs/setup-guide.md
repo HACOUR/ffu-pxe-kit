@@ -119,21 +119,68 @@ Dismount-DiskImage -ImagePath '<FFU-BUILDER-PATH>\WinPE_FFU_Deploy_x64.iso'
 
 Repeat after every new WinPE build (planned: `Update-FfuBootImage`).
 
-## 6. Get the FFU and drivers to the device ⚠ open
+## 6. Network deployment - no USB stick ⚠ unit-tested, end-to-end test pending
 
-**Important:** the stock `ApplyFFU.ps1` reads the FFU and the `Drivers` folder **from a local volume only**
-(a removable NTFS drive, or a fixed NTFS volume labelled `Deploy`). It has no network share support.
-PXE boot alone therefore gets WinPE onto the device - not the image.
+**Why this is needed:** the stock `ApplyFFU.ps1` reads the FFU and the `Drivers` folder
+**from a local volume only** (removable NTFS drive, or fixed NTFS volume labelled `Deploy`).
+PXE alone gets WinPE onto the device - not the image. Without a USB stick it stops with
+*"Cannot find USB drive letter"*.
 
-Options being evaluated:
+**What ffu-pxe-kit does** (`New-FfuNetworkBootImage`), in a copy of the FFU Builder `boot.wim`:
 
-| Option | How | Notes |
+1. Patches the included `ApplyFFU.ps1` with two small, marked changes
+   (`ConvertTo-FfuNetworkApplyScript`): use `FFU_DEPLOY_ROOT` (the mapped share) instead of
+   a USB drive, and a per-device log name. Without these variables the original USB logic is unchanged.
+2. Adds `X:\ffu-pxe-kit\Start-FfuNetworkDeploy.ps1` + `network.json` (share path, user name - **no password**).
+3. Replaces `startnet.cmd`: WinPE waits for the network, asks for the password, maps the share
+   (`net use N: …`) and starts the patched `ApplyFFU.ps1`.
+4. Optional: injects WinPE network drivers (`-NetworkDriverPath`) - needed if WinPE has no driver for the device's NIC.
+5. Optional: imports the result into WDS as a **new** boot image - the existing one stays untouched.
+
+### 6.1 Share layout and permissions
+
+The share root must look like a FFU Builder USB stick:
+
+```
+\\<SERVER>\<STAGING-SHARE-NAME>\
+├─ <image>.ffu
+├─ Drivers\
+│  └─ DriverMapping.json
+├─ (optional) Autopilot\  PPKG\  unattend\
+```
+
+`ApplyFFU.ps1` writes its logs (`ScriptLog_<serial>.txt`, `dism.log`, `setupapi.offline.log`)
+into the share root. Recommended:
+
+| Account | Share root | `Drivers\`, `*.ffu` |
 |---|---|---|
-| A. PXE + USB | Boot WinPE via PXE, FFU and drivers on a USB stick | Works with stock FFU Builder; no network share needed |
-| B. Patched `ApplyFFU.ps1` | WinPE maps the staging share before applying | Needs a **read-only** account; never store a password in the boot image - prompt at runtime or use a short-lived credential |
-| C. Copy to local disk | WinPE copies FFU + drivers from the share to a temporary local `Deploy` volume, then runs stock `ApplyFFU.ps1` | Keeps FFU Builder unmodified; needs scratch space |
+| `<DEPLOY-USER>` (local account on the server, used only for deployment) | Modify | Read |
+| Administrators | Full control | Full control |
 
-This section will be completed once the approach is tested end-to-end.
+> Keep the deployment network isolated. Deploy one device at a time until tested -
+> parallel devices share `dism.log` in the root.
+
+### 6.2 Build and import the boot image
+
+On the WDS server (elevated PowerShell):
+
+```powershell
+Import-Module .\src\FfuPxeKit\FfuPxeKit.psm1
+$iso   = Mount-DiskImage -ImagePath '<FFU-BUILDER-PATH>\WinPE_FFU_Deploy_x64.iso' -PassThru
+$drive = ($iso | Get-Volume).DriveLetter
+New-FfuNetworkBootImage -SourceWim "$($drive):\sources\boot.wim" -WorkPath 'C:\Temp\ffu-netboot' `
+    -SharePath '\\<SERVER>\<STAGING-SHARE-NAME>' -UserName '<SERVER>\<DEPLOY-USER>' `
+    -ImportToWds -BootImageName 'FFU Network Deploy'
+Dismount-DiskImage -ImagePath '<FFU-BUILDER-PATH>\WinPE_FFU_Deploy_x64.iso'
+```
+
+Use `-WhatIf` first to see what would happen.
+
+### 6.3 On the device
+
+PXE boot → choose **FFU Network Deploy** → WinPE waits for the network → enter the password
+of `<DEPLOY-USER>` → `ApplyFFU.ps1` runs as usual (select FFU, apply, drivers).
+If something fails, WinPE opens a command prompt for troubleshooting (`ipconfig`, `net use`).
 
 ## 7. Health check ✅
 
@@ -152,12 +199,16 @@ age of the newest FFU and the driver mapping.
 3. WinPE starts `ApplyFFU.ps1`: select the FFU, the image is applied, drivers for the detected model are injected.
 4. Device reboots into Windows setup/OOBE.
 
+For network deployment (no USB) see section 6.3.
+
 ## 9. Troubleshooting
 
 | Symptom | Where to look |
 |---|---|
 | Wrong / no drivers | `ScriptLog.txt` on the deploy volume - look for "No matching driver mapping rule". Check the match field for your vendor (table in section 3). Lenovo: `MachineType` = first 4 characters of the model. |
 | Driver injection failed | `setupapi.offline.log` and `dism.log` copied to the deploy volume |
+| "Cannot find USB drive letter" | You booted the stock FFU Builder WinPE without USB - use the network boot image (section 6) |
+| "Server not reachable" in WinPE | No NIC driver in WinPE (`-NetworkDriverPath`), wrong VLAN, or DHCP |
 | Device does not PXE boot | WDS service running? `AnswerClients` set? DHCP relay/IP helper towards WDS? UEFI network stack enabled? |
 | Mapping file broken | `Test-FfuEnvironment` reports `DriverMapping: Invalid JSON` |
 

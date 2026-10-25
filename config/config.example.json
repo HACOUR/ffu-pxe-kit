@@ -6,6 +6,9 @@
   "WdsRemoteInstallPath": "<WDS-REMOTEINSTALL-PATH>",
   "BootImageName": "<BOOT-IMAGE-NAME>",
   "DriverMappingPath": "<STAGING-PATH>\\Drivers\\DriverMapping.json",
+  "DeploySharePath": "\\\\<SERVER>\\<STAGING-SHARE-NAME>",
+  "DeployUserName": "<SERVER>\\<DEPLOY-USER>",
+  "NetworkBootImageName": "FFU Network Deploy",
   "KeepImages": 3,
   "MinFreeSpaceGB": 50
 }
