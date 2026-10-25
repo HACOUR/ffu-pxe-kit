@@ -14,9 +14,11 @@ param(
 Import-Module ([IO.Path]::Combine($PSScriptRoot, '..', 'src', 'FfuPxeKit', 'FfuPxeKit.psm1')) -Force
 $cfg = Get-Content -LiteralPath $ConfigPath -Raw | ConvertFrom-Json
 
-$iso = Mount-DiskImage -ImagePath $IsoPath -PassThru
+# Mount read-only even in -WhatIf mode, so the dry run can inspect the ISO
+$iso = Mount-DiskImage -ImagePath $IsoPath -PassThru -Access ReadOnly -WhatIf:$false
 try {
     $drive = ($iso | Get-Volume).DriveLetter
+    if (-not $drive) { throw "ISO mounted but no drive letter assigned: $IsoPath" }
     $params = @{
         SourceWim     = "$($drive):\sources\boot.wim"
         WorkPath      = $WorkPath
@@ -30,5 +32,5 @@ try {
     New-FfuNetworkBootImage @params
 }
 finally {
-    Dismount-DiskImage -ImagePath $IsoPath | Out-Null
+    Dismount-DiskImage -ImagePath $IsoPath -WhatIf:$false | Out-Null
 }

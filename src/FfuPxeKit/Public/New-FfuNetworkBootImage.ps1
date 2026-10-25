@@ -42,7 +42,11 @@ function New-FfuNetworkBootImage {
     $wim   = Join-Path $WorkPath 'boot.wim'
     $mount = Join-Path $WorkPath 'mount'
 
-    if (-not $PSCmdlet.ShouldProcess($wim, "Build network boot image for $SharePath")) { return }
+    if (-not $PSCmdlet.ShouldProcess($wim, "Build network boot image for $SharePath")) {
+        Write-Verbose "Source: $SourceWim | Share: $SharePath | User: $UserName | WDS name: $BootImageName"
+        [pscustomobject]@{ WhatIf = $true; SourceWim = $SourceWim; WorkWim = $wim; SharePath = $SharePath; UserName = $UserName; ImportToWds = [bool]$ImportToWds; BootImageName = $BootImageName }
+        return
+    }
 
     New-Item -ItemType Directory -Force -Path $WorkPath, $mount | Out-Null
     Copy-Item -LiteralPath $SourceWim -Destination $wim -Force
