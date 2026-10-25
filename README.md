@@ -19,8 +19,8 @@ Windows Deployment Services (WDS) — built around [FFU Builder](https://github.
 | Driver mapping (`Add-FfuDriverModel`) | ✅ | ⏳ | — |
 | Health check (`Test-FfuEnvironment`) | ✅ | ✅ Windows Server, WDS standalone, lists mapped models (Lenovo + HP) | — |
 | Network boot image (`ConvertTo-FfuNetworkApplyScript`, `New-FfuNetworkBootImage`) | ✅ patch verified against ApplyFFU.ps1 2026-04 and current main | ✅ built, patched, imported into WDS as additional boot image | ⏳ pending |
-| Sync to staging (`Sync-FfuStaging`) | ✅ | ⏳ | — |
-| Button window (`gui/FfuPxeKit-Gui.ps1`) | syntax only | ✅ health check runs from the window | — |
+| Sync to staging (`Sync-FfuStaging`) | ✅ | ✅ detects FFU Builder downloading straight into the share (`SameFolder`); copy/mirror path not yet run on a server | — |
+| Button window (`gui/FfuPxeKit-Gui.ps1`) | syntax only | ✅ *Health check* and *Sync drivers* buttons | — |
 | Network deployment in WinPE (`winpe/Start-FfuNetworkDeploy.ps1`) | ✅ syntax/static checks | — | ⏳ pending |
 | `Install-FfuPxeServer`, `Update-FfuBootImage`, `Invoke-FfuMonthlyBuild`, `Remove-FfuOldImages` | planned | planned |
 
