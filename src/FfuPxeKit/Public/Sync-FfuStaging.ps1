@@ -39,8 +39,19 @@ function Sync-FfuStaging {
     }
 
     $models = @(Get-ChildItem -LiteralPath $srcDrivers -Directory | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Directory })
+
+    # FFU Builder can download straight into the staging folder - then there is nothing to copy
+    $norm = { param($p) [IO.Path]::GetFullPath($p).TrimEnd('\', '/') }
+    $sameFolder = (& $norm $srcDrivers) -eq (& $norm $dstDrivers)
+    if ($sameFolder) {
+        $result.Add([pscustomobject]@{ Item = 'Drivers'; Status = 'SameFolder'; Detail = "FFU Builder already downloads into $dstDrivers - nothing to sync" })
+    }
+    elseif ($Mirror -and $models.Count -eq 0) {
+        throw "Refusing to mirror: source $srcDrivers contains no model folders - this would delete all drivers in $dstDrivers."
+    }
     $action = if ($Mirror) { 'Mirror drivers (removes extra folders in staging)' } else { 'Copy drivers' }
-    if ($PSCmdlet.ShouldProcess($dstDrivers, "$action from $srcDrivers ($($models.Count) model folder(s))")) {
+    if ($sameFolder) { }
+    elseif ($PSCmdlet.ShouldProcess($dstDrivers, "$action from $srcDrivers ($($models.Count) model folder(s))")) {
         Invoke-FfuFolderSync -Source $srcDrivers -Destination $dstDrivers -Mirror:$Mirror
         $result.Add([pscustomobject]@{ Item = 'Drivers'; Status = 'Synced'; Detail = "$($models.Count) model folder(s) -> $dstDrivers" })
     }

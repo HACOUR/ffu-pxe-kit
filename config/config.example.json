@@ -1,5 +1,7 @@
 {
   "FfuBuilderPath": "<FFU-BUILDER-PATH>",
+  "FfuBuilderDriversPath": "<FFU-BUILDER-PATH>\\Drivers",
+  "FfuCapturePath": "<FFU-BUILDER-PATH>\\FFU",
   "FfuBuilderConfigFile": "<FFU-BUILDER-PATH>\\config\\FFUConfig.json",
   "StagingPath": "<STAGING-PATH>",
   "StagingShareName": "<STAGING-SHARE-NAME>",

@@ -67,6 +67,21 @@ Describe 'Sync-FfuStaging' {
         Test-Path (Join-Path $e.Staging 'Drivers' 'Contoso') | Should -BeFalse
     }
 
+    It 'skips drivers when FFU Builder downloads straight into staging' {
+        $cfg = Get-Content $e.ConfigPath -Raw | ConvertFrom-Json
+        $cfg | Add-Member FfuBuilderDriversPath (Join-Path $e.Staging 'Drivers')
+        $cfg | ConvertTo-Json | Set-Content $e.ConfigPath
+        Set-Content (Join-Path $e.Staging 'Drivers' 'DriverMapping.json') '[]'
+        (Sync-FfuStaging -ConfigPath $e.ConfigPath -Mirror | Where-Object Item -eq 'Drivers').Status | Should -Be 'SameFolder'
+    }
+
+    It 'refuses to mirror an empty source' {
+        Get-ChildItem (Join-Path $e.Builder 'Drivers') -Directory | Remove-Item -Recurse -Force
+        New-Item -ItemType Directory -Force (Join-Path $e.Staging 'Drivers' 'Contoso' 'X') | Out-Null
+        { Sync-FfuStaging -ConfigPath $e.ConfigPath -Mirror } | Should -Throw '*Refusing to mirror*'
+        Test-Path (Join-Path $e.Staging 'Drivers' 'Contoso' 'X') | Should -BeTrue
+    }
+
     It 'changes nothing with -WhatIf' {
         $r = Sync-FfuStaging -ConfigPath $e.ConfigPath -IncludeImage -WhatIf
         $r.Status | Should -Not -Contain 'Synced'
