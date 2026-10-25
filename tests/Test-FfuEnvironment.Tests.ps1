@@ -36,6 +36,12 @@ Describe 'Test-FfuEnvironment' {
             Mock Get-FfuFreeSpaceGB { 200 }
         }
 
+        It 'lists every mapped model' {
+            $r = Test-FfuEnvironment -ConfigPath $envi.ConfigPath
+            ($r | Where-Object Check -eq 'DriverMapping').Detail | Should -Be '1 model(s) mapped: Contoso 1'
+            ($r | Where-Object Status -eq 'Info').Detail | Should -Contain 'Contoso - Laptop 14 Gen 1 (MT01)'
+        }
+
         It 'reports no failures and no warnings' {
             $r = Test-FfuEnvironment -ConfigPath $envi.ConfigPath
             $r.Status | Should -Not -Contain 'Fail'

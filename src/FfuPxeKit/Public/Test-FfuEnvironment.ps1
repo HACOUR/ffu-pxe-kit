@@ -6,7 +6,7 @@ function Test-FfuEnvironment {
     .DESCRIPTION
     Checks configuration, folders, FFU Builder, WDS service, boot image,
     staging share, free disk space, FFU images and the driver mapping.
-    Each result has a Status of Pass, Warn, Fail or Skip.
+    Each result has a Status of Pass, Warn, Fail, Skip or Info (list of mapped models).
     Windows-only checks are skipped on other platforms.
 
     .EXAMPLE
@@ -99,8 +99,16 @@ function Test-FfuEnvironment {
         $root     = Split-Path -Parent $cfg.DriverMappingPath
         try {
             $findings = @(Test-FfuDriverMapping -MappingPath $cfg.DriverMappingPath -DriversRoot $root -ErrorAction Stop)
-            if (-not $findings) { ConvertTo-FfuResult 'DriverMapping' 'Pass' 'Consistent' }
-            else { $findings | ForEach-Object { ConvertTo-FfuResult "DriverMapping:$($_.Check)" 'Warn' $_.Item } }
+            $entries  = Read-FfuDriverMapping -Path $cfg.DriverMappingPath   # returns the array as one object
+            $perMake  = ($entries | Group-Object Manufacturer | Sort-Object Name | ForEach-Object { "$($_.Name) $($_.Count)" }) -join ', '
+            $summary  = if ($entries.Count) { "$($entries.Count) model(s) mapped: $perMake" } else { 'No models mapped' }
+            $status   = if ($findings -or -not $entries.Count) { 'Warn' } else { 'Pass' }
+            ConvertTo-FfuResult 'DriverMapping' $status $summary
+            # one line per mapped model, so it is visible which devices get drivers
+            foreach ($e in ($entries | Sort-Object Manufacturer, Model)) {
+                ConvertTo-FfuResult "  Model" 'Info' "$($e.Manufacturer) - $($e.Model)"
+            }
+            $findings | ForEach-Object { ConvertTo-FfuResult "DriverMapping:$($_.Check)" 'Warn' "$($_.Item) $($_.Detail)".Trim() }
         }
         catch { ConvertTo-FfuResult 'DriverMapping' 'Fail' $_.Exception.Message }
     }
