@@ -7,7 +7,7 @@ function Test-FfuDriverMapping {
     Reports:
     - MissingFolder   : mapping entry points to a folder that does not exist
     - EmptyFolder     : mapped folder contains no files
-    - DuplicateType   : machine type mapped more than once
+    - DuplicateType   : same device identity (MachineType / SystemId / SystemSku / Model) mapped more than once
     - UnmappedFolder  : model folder exists but is not referenced (often a leftover duplicate)
     Returns nothing when everything is consistent.
     #>
@@ -29,8 +29,17 @@ function Test-FfuDriverMapping {
         }
     }
 
-    $entries | Group-Object MachineType | Where-Object Count -gt 1 | ForEach-Object {
-        [pscustomobject]@{ Check = 'DuplicateType'; Item = $_.Name; Detail = "$($_.Count) entries" }
+    # Match key depends on the vendor (same logic as ApplyFFU.ps1):
+    # Lenovo = MachineType, Dell/HP/... = SystemId, Microsoft = SystemSku (array), otherwise Model
+    $keyed = foreach ($e in $entries) {
+        $key = if ($e.PSObject.Properties['MachineType'] -and $e.MachineType) { "MachineType=$($e.MachineType)" }
+               elseif ($e.PSObject.Properties['SystemId'] -and $e.SystemId) { "SystemId=$(@($e.SystemId) -join ',')" }
+               elseif ($e.PSObject.Properties['SystemSku'] -and $e.SystemSku) { "SystemSku=$(@($e.SystemSku | Sort-Object) -join ',')" }
+               else { "Model=$($e.Model)" }
+        [pscustomobject]@{ Key = "$($e.Manufacturer)|$key"; Entry = $e }
+    }
+    $keyed | Group-Object Key | Where-Object Count -gt 1 | ForEach-Object {
+        [pscustomobject]@{ Check = 'DuplicateType'; Item = $_.Name; Detail = "$($_.Count) entries: $(($_.Group.Entry.Model) -join '; ')" }
     }
 
     # Model folders = second level below the drivers root (<Manufacturer>\<Model>)

@@ -15,11 +15,12 @@ Windows Deployment Services (WDS) — built around [FFU Builder](https://github.
 | Area | Unit tests (mocked) | Tested on real WDS server | Tested on a device |
 |---|---|---|---|
 | Config reader | ✅ | ✅ | — |
-| Driver mapping (`Test-FfuDriverMapping`) | ✅ | ✅ (found an unmapped duplicate folder) | — |
+| Driver mapping (`Test-FfuDriverMapping`) | ✅ | ✅ Lenovo (MachineType) + HP (SystemId) mappings from FFU Builder | — |
 | Driver mapping (`Add-FfuDriverModel`) | ✅ | ⏳ | — |
 | Health check (`Test-FfuEnvironment`) | ✅ | ✅ Windows Server, WDS standalone | — |
 | Network boot image (`ConvertTo-FfuNetworkApplyScript`, `New-FfuNetworkBootImage`) | ✅ patch verified against ApplyFFU.ps1 2026-04 and current main | ✅ built, patched, imported into WDS as additional boot image | ⏳ pending |
-| Sync to staging (`Sync-FfuStaging`, GUI) | ✅ | ⏳ | — |
+| Sync to staging (`Sync-FfuStaging`) | ✅ | ⏳ | — |
+| Button window (`gui/FfuPxeKit-Gui.ps1`) | syntax only | ✅ health check runs from the window | — |
 | Network deployment in WinPE (`winpe/Start-FfuNetworkDeploy.ps1`) | ✅ syntax/static checks | — | ⏳ pending |
 | `Install-FfuPxeServer`, `Update-FfuBootImage`, `Invoke-FfuMonthlyBuild`, `Remove-FfuOldImages` | planned | planned |
 

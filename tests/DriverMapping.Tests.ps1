@@ -79,6 +79,29 @@ Describe 'Test-FfuDriverMapping' {
         $r[0].Item  | Should -Be 'Contoso\Laptop 14 Gen 1 (Intel) (MT01)'
     }
 
+    It 'does not report vendors without MachineType as duplicates' {
+        New-ModelFolder $root 'Fabrikam\Notebook 14 (aa01)'
+        New-ModelFolder $root 'Fabrikam\Notebook 16 (aa02)'
+        New-ModelFolder $root 'Microsoft\Tablet Pro 9'
+        Write-FfuDriverMapping -Path $map -Entries @(
+            [pscustomobject]@{ Manufacturer='Fabrikam'; Model='Notebook 14 (aa01)'; DriverPath='Fabrikam\Notebook 14 (aa01)'; SystemId='aa01' },
+            [pscustomobject]@{ Manufacturer='Fabrikam'; Model='Notebook 16 (aa02)'; DriverPath='Fabrikam\Notebook 16 (aa02)'; SystemId='aa02' },
+            [pscustomobject]@{ Manufacturer='Microsoft'; Model='Tablet Pro 9'; DriverPath='Microsoft\Tablet Pro 9'; SystemSku=@('SKU_1','SKU_2') }
+        )
+        Test-FfuDriverMapping -MappingPath $map -DriversRoot $root | Should -BeNullOrEmpty
+    }
+
+    It 'reports a duplicate SystemId' {
+        New-ModelFolder $root 'Fabrikam\A'; New-ModelFolder $root 'Fabrikam\B'
+        Write-FfuDriverMapping -Path $map -Entries @(
+            [pscustomobject]@{ Manufacturer='Fabrikam'; Model='A'; DriverPath='Fabrikam\A'; SystemId='aa01' },
+            [pscustomobject]@{ Manufacturer='Fabrikam'; Model='B'; DriverPath='Fabrikam\B'; SystemId='aa01' }
+        )
+        $r = @(Test-FfuDriverMapping -MappingPath $map -DriversRoot $root)
+        $r.Check | Should -Contain 'DuplicateType'
+        ($r | Where-Object Check -eq 'DuplicateType').Item | Should -Be 'Fabrikam|SystemId=aa01'
+    }
+
     It 'finds missing and empty folders and duplicate machine types' {
         New-ModelFolder $root 'Contoso\A' -Empty
         Write-FfuDriverMapping -Path $map -Entries @(
