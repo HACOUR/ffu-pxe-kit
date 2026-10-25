@@ -182,7 +182,25 @@ PXE boot → choose **FFU Network Deploy** → WinPE waits for the network → e
 of `<DEPLOY-USER>` → `ApplyFFU.ps1` runs as usual (select FFU, apply, drivers).
 If something fails, WinPE opens a command prompt for troubleshooting (`ipconfig`, `net use`).
 
-## 7. Health check ✅
+## 7. Adding a new device model
+
+1. In the **FFU Builder UI**, download the drivers for the model. FFU Builder stores them in
+   `<FFU-BUILDER-PATH>\Drivers` and updates `DriverMapping.json` itself (including Surface `SystemSku`).
+2. Sync to the PXE share - button **Sync drivers** in `gui\FfuPxeKit-Gui.ps1`, or:
+
+```powershell
+.\scripts\Sync-FfuStaging.ps1 -WhatIf        # dry run
+.\scripts\Sync-FfuStaging.ps1                # copy drivers + mapping, then health check
+.\scripts\Sync-FfuStaging.ps1 -IncludeImage  # also copy the newest FFU (keeps older ones)
+```
+
+`-Mirror` additionally removes driver folders from the share that no longer exist in FFU Builder.
+
+> **ARM64 devices** (e.g. Snapdragon-based Surface) need an ARM64 FFU **and** an ARM64 WinPE boot image -
+> an x64 image does not boot there. Surface has no built-in Ethernet: PXE needs a Surface Ethernet adapter or dock
+> with PXE support, network boot enabled in Surface UEFI, and a WinPE driver for the adapter.
+
+## 8. Health check ✅
 
 ```powershell
 Copy-Item .\config\config.example.json .\config\config.json   # fill in your values
@@ -192,7 +210,7 @@ Copy-Item .\config\config.example.json .\config\config.json   # fill in your val
 Read-only. Checks folders, FFU Builder, WDS service, boot image, staging share, free space,
 age of the newest FFU and the driver mapping.
 
-## 8. Deploying a device
+## 9. Deploying a device
 
 1. Connect the device to the deployment network, boot from network (UEFI PXE, usually F12).
 2. Select the boot image `<BOOT-IMAGE-NAME>`.
@@ -201,7 +219,7 @@ age of the newest FFU and the driver mapping.
 
 For network deployment (no USB) see section 6.3.
 
-## 9. Troubleshooting
+## 10. Troubleshooting
 
 | Symptom | Where to look |
 |---|---|

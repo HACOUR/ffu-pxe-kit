@@ -19,6 +19,7 @@ Windows Deployment Services (WDS) — built around [FFU Builder](https://github.
 | Driver mapping (`Add-FfuDriverModel`) | ✅ | ⏳ | — |
 | Health check (`Test-FfuEnvironment`) | ✅ | ✅ Windows Server, WDS standalone | — |
 | Network boot image (`ConvertTo-FfuNetworkApplyScript`, `New-FfuNetworkBootImage`) | ✅ patch verified against ApplyFFU.ps1 2026-04 and current main | ✅ built, patched, imported into WDS as additional boot image | ⏳ pending |
+| Sync to staging (`Sync-FfuStaging`, GUI) | ✅ | ⏳ | — |
 | Network deployment in WinPE (`winpe/Start-FfuNetworkDeploy.ps1`) | ✅ syntax/static checks | — | ⏳ pending |
 | `Install-FfuPxeServer`, `Update-FfuBootImage`, `Invoke-FfuMonthlyBuild`, `Remove-FfuOldImages` | planned | planned |
 
@@ -36,6 +37,8 @@ FFU Builder creates the image (FFU) and the WinPE deploy media.
 | `Invoke-FfuMonthlyBuild` | Headless monthly FFU build via FFU Builder `-ConfigFile` |
 | `Add-FfuDriverModel` | Add a device model and maintain the driver mapping |
 | `Test-FfuEnvironment` | Health check: services, share, free space, mapping consistency |
+| `Sync-FfuStaging` | Copy drivers + `DriverMapping.json` (and optionally the newest FFU) from FFU Builder to the PXE share |
+| `gui\FfuPxeKit-Gui.ps1` | Small window with buttons: *Sync drivers*, *Sync drivers + newest image*, *Health check* |
 | `Remove-FfuOldImages` | Keep the last *n* FFU images, remove the rest |
 
 ## Concept
