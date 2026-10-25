@@ -194,7 +194,22 @@ If something fails, WinPE opens a command prompt for troubleshooting (`ipconfig`
 .\scripts\Sync-FfuStaging.ps1 -IncludeImage  # also copy the newest FFU (keeps older ones)
 ```
 
-`-Mirror` additionally removes driver folders from the share that no longer exist in FFU Builder.
+`-Mirror` additionally removes driver folders from the share that no longer exist in FFU Builder
+(refused if the source is empty).
+
+> **Tip:** you can point FFU Builder's **Drivers Folder** (UI → *Drivers*) directly at the share,
+> e.g. `<STAGING-PATH>\Drivers`. Then downloads land in the share right away and `DriverMapping.json`
+> is maintained there - no driver sync needed (`Sync-FfuStaging` reports `SameFolder`).
+> Set `FfuBuilderDriversPath` in `config.json` to the same folder.
+
+**Desktop shortcut for the button window** (elevated PowerShell, once):
+
+```powershell
+$s = (New-Object -ComObject WScript.Shell).CreateShortcut("$env:USERPROFILE\Desktop\ffu-pxe-kit.lnk")
+$s.TargetPath = 'powershell.exe'
+$s.Arguments  = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "<KIT-PATH>\gui\FfuPxeKit-Gui.ps1"'
+$s.Save()
+```
 
 > **ARM64 devices** (e.g. Snapdragon-based Surface) need an ARM64 FFU **and** an ARM64 WinPE boot image -
 > an x64 image does not boot there. Surface has no built-in Ethernet: PXE needs a Surface Ethernet adapter or dock
