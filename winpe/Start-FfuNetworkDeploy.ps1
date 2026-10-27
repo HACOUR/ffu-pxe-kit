@@ -17,6 +17,16 @@ $ErrorActionPreference = 'Stop'
 
 function Write-Step([string]$Text) { Write-Host "`n=== $Text ===" -ForegroundColor Cyan }
 
+function Test-SmbPort([string]$ComputerName, [int]$TimeoutMs = 2000) {
+    $client = New-Object System.Net.Sockets.TcpClient
+    try {
+        $ar = $client.BeginConnect($ComputerName, 445, $null, $null)
+        return ($ar.AsyncWaitHandle.WaitOne($TimeoutMs) -and $client.Connected)
+    }
+    catch { return $false }
+    finally { $client.Close() }
+}
+
 function Exit-ToShell([string]$Message) {
     Write-Host "`n$Message" -ForegroundColor Red
     Write-Host 'Opening a command prompt for troubleshooting. Type "exit" to reboot.' -ForegroundColor Yellow
@@ -46,12 +56,13 @@ Write-Step "Waiting for network (server $server, max $timeout s)"
 $deadline = (Get-Date).AddSeconds($timeout)
 $online = $false
 while ((Get-Date) -lt $deadline) {
-    if (Test-Connection -ComputerName $server -Count 1 -Quiet -ErrorAction SilentlyContinue) { $online = $true; break }
+    # SMB port instead of ping: Windows Server blocks ICMP echo by default
+    if (Test-SmbPort -ComputerName $server) { $online = $true; break }
     Start-Sleep -Seconds 3
 }
 if (-not $online) {
     ipconfig /all
-    Exit-ToShell "Server $server not reachable. Check cable/VLAN and whether WinPE has a driver for this network adapter."
+    Exit-ToShell "Server $server not reachable. Check name resolution (try the server IP in DeploySharePath), firewall (TCP 445), cable/VLAN and the WinPE network driver."
 }
 Write-Host 'Network OK'
 

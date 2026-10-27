@@ -241,7 +241,7 @@ For network deployment (no USB) see section 6.3.
 | Wrong / no drivers | `ScriptLog.txt` on the deploy volume - look for "No matching driver mapping rule". Check the match field for your vendor (table in section 3). Lenovo: `MachineType` = first 4 characters of the model. |
 | Driver injection failed | `setupapi.offline.log` and `dism.log` copied to the deploy volume |
 | "Cannot find USB drive letter" | You booted the stock FFU Builder WinPE without USB - use the network boot image (section 6) |
-| "Server not reachable" in WinPE | No NIC driver in WinPE (`-NetworkDriverPath`), wrong VLAN, or DHCP |
+| "Server not reachable" in WinPE | Server name not resolvable (use the IP in `DeploySharePath`, e.g. a standalone WDS server without DNS record), TCP 445 blocked, no NIC driver in WinPE (`-NetworkDriverPath`), wrong VLAN, or DHCP. The check uses TCP 445, not ping. |
 | Device does not PXE boot | WDS service running? `AnswerClients` set? DHCP relay/IP helper towards WDS? UEFI network stack enabled? |
 | Mapping file broken | `Test-FfuEnvironment` reports `DriverMapping: Invalid JSON` |
 
